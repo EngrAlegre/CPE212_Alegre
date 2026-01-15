@@ -1,0 +1,29 @@
+- hosts: all
+  become: true
+  vars:
+    apache_package: httpd
+    php_package: php
+    apache_service: httpd
+
+  tasks:
+
+    - name: install apache and php packages
+      dnf:
+        name:
+          - "{{ apache_package }}"
+          - "{{ php_package }}"
+        state: latest
+        update_cache: yes
+
+    - name: start and enable httpd service
+      service:
+        name: "{{ apache_service }}"
+        state: started
+        enabled: yes
+
+    - name: allow http traffic in firewall
+      firewalld:
+        service: http
+        permanent: yes
+        state: enabled
+        immediate: yes
