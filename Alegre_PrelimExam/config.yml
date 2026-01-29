@@ -1,7 +1,9 @@
 
-- name: Prelim play
+- name: Prelim Playbook
   hosts: all
   become: yes
+  vars_files:
+    - config.yml
 
   tasks:
 
@@ -12,21 +14,21 @@
         - python3-pip
       state: latest
 
-  - name: Set python3 as default python
-    alternatives:
-      name: python
-      path: /usr/bin/python3
+  - name: Install Python MySQL connector
+    apt:
+      name: python3-pymysql
+      state: present
 
   - name: Install OpenJDK
     package:
-      name: java-11-openjdk
+      name: openjdk-21-jdk
       state: present
 
   - name: Install MariaDB
     package:
       name:
         - mariadb-server
-        - mariadb
+        - mariadb-client
       state: present
 
   - name: Start MariaDB Service
@@ -37,16 +39,10 @@
 
   - name: Create database
     mysql_db:
-      name: "{{ db_name }}"
+      name: prelim
       state: present
-
-  - name: Create table and insert record
-    mysql_query:
-      login_db: "{{ prelim_exam }}"
-      query: >
-        CREATE TABLE IF NOT EXISTS exam_table
-        (id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(50));
-        INSERT INTO exam_table (name) VALUES ('Ansible Exam');
+      login_user: root
+      login_unix_socket: /var/run/mysqld/mysqld.sock
 
   - name: Set MOTD message
     copy:
@@ -55,6 +51,19 @@
 
   - name: Create user
     user:
-      name: "{{ Isaac }}"
+      name: Isaac
       state: present
+
+  - name: Set python3 as default python
+    alternatives:
+      name: python3
+      path: /usr/bin/python3
+      
+  - name: Create table and insert record
+    mysql_query:
+      login_db: root
+      query:
+        CREATE TABLE IF NOT EXISTS exam_table
+        (id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(50));
+        INSERT INTO exam_table (name) VALUES ('Ansible Exam');
 
