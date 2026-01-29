@@ -1,0 +1,60 @@
+
+- name: Prelim play
+  hosts: all
+  become: yes
+
+  tasks:
+
+  - name: Install Python3 and pip3
+    apt:
+      name:
+        - python3
+        - python3-pip
+      state: latest
+
+  - name: Set python3 as default python
+    alternatives:
+      name: python
+      path: /usr/bin/python3
+
+  - name: Install OpenJDK
+    package:
+      name: java-11-openjdk
+      state: present
+
+  - name: Install MariaDB
+    package:
+      name:
+        - mariadb-server
+        - mariadb
+      state: present
+
+  - name: Start MariaDB Service
+    service:
+      name: mariadb
+      state: started
+      enabled: yes
+
+  - name: Create database
+    mysql_db:
+      name: "{{ db_name }}"
+      state: present
+
+  - name: Create table and insert record
+    mysql_query:
+      login_db: "{{ prelim_exam }}"
+      query: >
+        CREATE TABLE IF NOT EXISTS exam_table
+        (id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(50));
+        INSERT INTO exam_table (name) VALUES ('Ansible Exam');
+
+  - name: Set MOTD message
+    copy:
+      content: "{{ motd_message | default('Ansible Managed node by Isaac') }}"
+      dest: /etc/motd
+
+  - name: Create user
+    user:
+      name: "{{ Isaac }}"
+      state: present
+
