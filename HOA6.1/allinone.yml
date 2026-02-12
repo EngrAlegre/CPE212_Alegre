@@ -1,7 +1,21 @@
-- hosts: all
+- hosts: web_servers
+  tags: ubuntu,web
+  become: true
+
+  roles:
+    - Web_Servers
+
+
+- hosts: db_servers
+  tags: db,ubuntu
   become: true
 
   roles:
     - DB_Servers
+
+- hosts: file_servers
+  tags: file, ubuntu
+  become: true
+
+  roles:
     - Files_Servers
-    - Web_Servers
