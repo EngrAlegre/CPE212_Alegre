@@ -1,0 +1,7 @@
+- hosts: all
+  become: true
+
+  roles:
+    - DB_Servers
+    - Files_Servers
+    - Web_Servers

@@ -1,0 +1,16 @@
+---
+# tasks file for apache
+
+- name: install mariadb
+  apt:
+    name: mariadb-server
+    state: latest
+  when: ansible_distribution == "Ubuntu"
+
+
+- name: install mariadb
+  dnf:
+    name: mariadb-server
+    state: latest
+  when: ansible_distribution == "CentOS"
+

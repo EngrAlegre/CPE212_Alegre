@@ -1,0 +1,27 @@
+---
+# tasks file for apache
+
+- name: install apache
+  apt:
+    name: apache2
+    state: latest
+  when: ansible_distribution == "Ubuntu"
+
+- name: php apache
+  apt:
+    name: libapache2-mod-php
+    state: latest
+  when: ansible_distribution == "Ubuntu"
+
+
+- name: install apache
+  dnf:
+    name: httpd
+    state: latest
+  when: ansible_distribution == "CentOS"
+
+- name: php apache
+  dnf:
+    name: php
+    state: latest
+  when: ansible_distribution == "CentOS"
