@@ -1,0 +1,15 @@
+- hosts: Isaac
+  tags: nagios, ubuntu
+  become: true
+
+  roles:
+    - nagios
+
+    
+- hosts: Jhon
+  tags: nagios, centos
+  become: true
+
+  roles:
+    - nagios
+

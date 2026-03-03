@@ -1,0 +1,14 @@
+---
+# handlers file for nagios
+
+- name: restart apache ubuntu
+  service:
+    name: "{{ apache_service_ubuntu }}"
+    state: restarted
+  when: ansible_distribution == "Ubuntu"
+
+- name: restart apache centos
+  service:
+    name: "{{ apache_service_centos }}"
+    state: restarted
+  when: ansible_distribution == "CentOS"
