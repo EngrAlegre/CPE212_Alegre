@@ -1,15 +1,8 @@
-- hosts: Isaac
-  tags: nagios, ubuntu
-  become: true
+---
+- name: Install and Start Nagios on Ubuntu & CentOS
+  hosts: all
+  become: yes
 
   roles:
-    - nagios
-
-    
-- hosts: Jhon
-  tags: nagios, centos
-  become: true
-
-  roles:
-    - nagios
-
+    - nagios-ubuntu
+    - nagios-centos
