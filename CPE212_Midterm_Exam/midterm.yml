@@ -1,0 +1,58 @@
+---
+- name: Install Elasticsearch on Ubuntu and CentOS hosts
+  hosts: ubuntu:centos
+  become: true
+  vars_files:
+    - config.yaml
+  vars:
+    elastic_component: elasticsearch
+  roles:
+    - Elastic
+
+- name: Install Kibana on Ubuntu and CentOS hosts
+  hosts: ubuntu:centos
+  become: true
+  vars_files:
+    - config.yaml
+  vars:
+    elastic_component: kibana
+  roles:
+    - Elastic
+
+- name: Install Logstash on Ubuntu and CentOS hosts
+  hosts: ubuntu:centos
+  become: true
+  vars_files:
+    - config.yaml
+  vars:
+    elastic_component: logstash
+  roles:
+    - Elastic
+
+- name: Install Nagios on Ubuntu
+  hosts: ubuntu
+  become: true
+  vars_files:
+    - config.yaml
+  roles:
+    - nagios
+
+- name: Install Apache and PHP on Ubuntu and CentOS hosts
+  hosts: ubuntu:centos
+  become: true
+  vars_files:
+    - config.yaml
+  vars:
+    lamp_component: web
+  roles:
+    - lamp
+
+- name: Install MariaDB on Ubuntu and CentOS hosts
+  hosts: ubuntu:centos
+  become: true
+  vars_files:
+    - config.yaml
+  vars:
+    lamp_component: db
+  roles:
+    - lamp

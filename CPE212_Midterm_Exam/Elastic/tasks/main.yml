@@ -1,47 +1,152 @@
+---
+- name: Install Java for Elastic Stack on Ubuntu
+  apt:
+    name: "{{ elastic_java_package_ubuntu }}"
+    state: present
+    update_cache: yes
+  when: ansible_facts['distribution'] == 'Ubuntu'
+
+- name: Install Java for Elastic Stack on CentOS
+  dnf:
+    name: "{{ elastic_java_package_centos }}"
+    state: present
+    update_cache: yes
+  when: ansible_distribution == 'CentOS'
+
 - name: Add Elastic GPG key
   apt_key:
-    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    url: "{{ elastic_repo_key }}"
     state: present
+  when: ansible_facts['distribution'] == 'Ubuntu'
 
 - name: Add Elastic repository
   apt_repository:
-    repo: "deb https://artifacts.elastic.co/packages/8.x/apt stable main"
+    repo: "{{ elastic_repo_url }}"
     state: present
     filename: elastic
+  when: ansible_facts['distribution'] == 'Ubuntu'
 
-- name: Update package cache
+- name: Add Elastic repository on CentOS
+  yum_repository:
+    name: elastic-8.x
+    description: "{{ elastic_repo_description_centos }}"
+    baseurl: "{{ elastic_repo_baseurl_centos }}"
+    gpgcheck: yes
+    gpgkey: "{{ elastic_repo_key }}"
+    enabled: yes
+  when: ansible_distribution == 'CentOS'
+
+- name: Install requested Elastic component
   apt:
+    name: "{{ elastic_component }}"
+    state: present
     update_cache: yes
+  when: ansible_facts['distribution'] == 'Ubuntu'
 
-- name: Install Elasticsearch
-  apt:
-    name: elasticsearch
+- name: Install requested Elastic component on CentOS
+  dnf:
+    name: "{{ elastic_component }}"
     state: present
+    update_cache: yes
+  when: ansible_distribution == 'CentOS'
 
-- name: Install Logstash
-  apt:
-    name: logstash
-    state: present
+- name: Ensure Elasticsearch logs directory exists on CentOS
+  file:
+    path: /usr/share/elasticsearch/logs
+    state: directory
+    owner: elasticsearch
+    group: elasticsearch
+    mode: '0755'
+  when:
+    - ansible_distribution == 'CentOS'
+    - elastic_component == 'elasticsearch'
 
-- name: Install Kibana
-  apt:
-    name: kibana
-    state: present
+- name: Ensure Elasticsearch package directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: elasticsearch
+    group: elasticsearch
+    mode: '0755'
+  loop:
+    - /var/lib/elasticsearch
+    - /var/log/elasticsearch
+  when:
+    - elastic_component == 'elasticsearch'
 
-- name: Start and enable Elasticsearch
+- name: Remove stale Elasticsearch secure settings from keystore
+  shell: |
+    for key in \
+      autoconfiguration.password_hash \
+      xpack.security.http.ssl.keystore.secure_password \
+      xpack.security.transport.ssl.keystore.secure_password \
+      xpack.security.transport.ssl.truststore.secure_password
+    do
+      /usr/share/elasticsearch/bin/elasticsearch-keystore list | grep -qx "$key" && \
+      /usr/share/elasticsearch/bin/elasticsearch-keystore remove "$key" || true
+    done
+  when:
+    - elastic_component == 'elasticsearch'
+  notify: Restart Elasticsearch
+
+- name: Configure Elasticsearch network settings
+  lineinfile:
+    path: /etc/elasticsearch/elasticsearch.yml
+    regexp: '^{{ item.key }}:'
+    line: "{{ item.key }}: {{ item.value }}"
+  loop:
+    - { key: 'network.host', value: '0.0.0.0' }
+    - { key: 'discovery.type', value: 'single-node' }
+    - { key: 'path.data', value: '/var/lib/elasticsearch' }
+    - { key: 'path.logs', value: '/var/log/elasticsearch' }
+    - { key: 'xpack.security.enabled', value: 'false' }
+    - { key: 'xpack.security.http.ssl.enabled', value: 'false' }
+    - { key: 'xpack.security.transport.ssl.enabled', value: 'false' }
+  when:
+    - elastic_component == 'elasticsearch'
+  notify: Restart Elasticsearch
+
+- name: Configure Kibana server host
+  lineinfile:
+    path: /etc/kibana/kibana.yml
+    regexp: '^server.host:'
+    line: 'server.host: "0.0.0.0"'
+  when:
+    - elastic_component == 'kibana'
+  notify: Restart Kibana
+
+- name: Configure Kibana Elasticsearch host
+  lineinfile:
+    path: /etc/kibana/kibana.yml
+    regexp: '^elasticsearch.hosts:'
+    line: 'elasticsearch.hosts: ["http://127.0.0.1:9200"]'
+  when:
+    - elastic_component == 'kibana'
+  notify: Restart Kibana
+
+- name: Configure Logstash output
+  copy:
+    dest: /etc/logstash/conf.d/02-beats-input.conf
+    content: |
+      input {
+        beats {
+          port => 5044
+        }
+      }
+      output {
+        elasticsearch {
+          hosts => ["http://127.0.0.1:9200"]
+        }
+      }
+    owner: root
+    group: root
+    mode: '0644'
+  when:
+    - elastic_component == 'logstash'
+  notify: Restart Logstash
+
+- name: Enable and start requested Elastic service
   systemd:
-    name: elasticsearch
-    enabled: yes
-    state: started
-
-- name: Start and enable Logstash
-  systemd:
-    name: logstash
-    enabled: yes
-    state: started
-
-- name: Start and enable Kibana
-  systemd:
-    name: kibana
+    name: "{{ elastic_component }}"
     enabled: yes
     state: started

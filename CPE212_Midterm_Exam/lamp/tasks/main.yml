@@ -1,0 +1,86 @@
+---
+- name: Install Apache and PHP packages on Ubuntu web host
+  apt:
+    name: "{{ lamp_web_packages_ubuntu }}"
+    state: present
+    update_cache: yes
+  when:
+    - lamp_component == 'web'
+    - ansible_facts['distribution'] == 'Ubuntu'
+
+- name: Install Apache and PHP packages on CentOS web host
+  dnf:
+    name: "{{ lamp_web_packages_centos }}"
+    state: present
+    update_cache: yes
+  when:
+    - lamp_component == 'web'
+    - ansible_distribution == 'CentOS'
+
+- name: Create PHP test page
+  copy:
+    dest: /var/www/html/index.php
+    content: |
+      <?php
+      phpinfo();
+      ?>
+    owner: root
+    group: root
+    mode: '0644'
+  when:
+    - lamp_component == 'web'
+    - ansible_facts['distribution'] in ['Ubuntu', 'CentOS']
+
+- name: Enable and start Apache web service on Ubuntu
+  systemd:
+    name: apache2
+    enabled: yes
+    state: started
+  when:
+    - lamp_component == 'web'
+    - ansible_facts['distribution'] == 'Ubuntu'
+
+- name: Enable and start Apache web service on CentOS
+  systemd:
+    name: httpd
+    enabled: yes
+    state: started
+  when:
+    - lamp_component == 'web'
+    - ansible_distribution == 'CentOS'
+
+- name: Install MariaDB on Ubuntu database host
+  apt:
+    name: "{{ lamp_db_packages_ubuntu }}"
+    state: present
+    update_cache: yes
+  when:
+    - lamp_component == 'db'
+    - ansible_facts['distribution'] == 'Ubuntu'
+
+- name: Enable and start MariaDB on Ubuntu database host
+  systemd:
+    name: mariadb
+    enabled: yes
+    state: started
+  when:
+    - lamp_component == 'db'
+    - ansible_facts['distribution'] == 'Ubuntu'
+
+- name: Install MariaDB on CentOS database host
+  dnf:
+    name: "{{ lamp_db_packages_centos }}"
+    state: present
+    update_cache: yes
+  when:
+    - lamp_component == 'db'
+    - ansible_distribution == "CentOS"
+
+- name: Enable and start MariaDB on CentOS database host
+  systemd:
+    name: mariadb
+    enabled: yes
+    state: started
+  when:
+    - lamp_component == 'db'
+    - ansible_distribution == "CentOS"

@@ -1,0 +1,21 @@
+---
+- name: Install Nagios packages on Ubuntu host
+  apt:
+    name: "{{ nagios_packages_ubuntu }}"
+    state: present
+    update_cache: yes
+  when: ansible_facts['distribution'] == 'Ubuntu'
+
+- name: Enable and start Nagios on Ubuntu
+  systemd:
+    name: nagios4
+    enabled: yes
+    state: started
+  when: ansible_facts['distribution'] == 'Ubuntu'
+
+- name: Enable and start Apache for Nagios UI on Ubuntu
+  systemd:
+    name: apache2
+    enabled: yes
+    state: started
+  when: ansible_facts['distribution'] == 'Ubuntu'

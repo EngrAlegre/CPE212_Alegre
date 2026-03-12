@@ -1,0 +1,41 @@
+---
+common_packages_ubuntu:
+  - apt-transport-https
+  - wget
+  - curl
+  - gnupg
+  - software-properties-common
+
+common_packages_centos:
+  - wget
+  - curl
+  - python3
+
+elastic_java_package_ubuntu: openjdk-11-jdk
+elastic_java_package_centos: java-11-openjdk
+elastic_repo_url: "deb https://artifacts.elastic.co/packages/8.x/apt stable main"
+elastic_repo_key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+elastic_repo_description_centos: Elastic repository for 8.x packages
+elastic_repo_baseurl_centos: https://artifacts.elastic.co/packages/8.x/yum
+
+nagios_packages_ubuntu:
+  - nagios4
+  - nagios-plugins-contrib
+  - apache2
+
+lamp_web_packages_ubuntu:
+  - apache2
+  - php
+  - libapache2-mod-php
+  - php-mysql
+
+lamp_web_packages_centos:
+  - httpd
+  - php
+  - php-mysqlnd
+
+lamp_db_packages_ubuntu:
+  - mariadb-server
+
+lamp_db_packages_centos:
+  - mariadb-server
