@@ -1,0 +1,24 @@
+---
+- name: Configure Elastic Stack servers
+  hosts: elastics
+  become: true
+  
+  roles:
+    - pre-requisites
+    - elastic
+
+- name: Configure performance monitoring servers
+  hosts: performance
+  become: true
+  
+  roles:
+    - pre-requisites
+    - performance
+
+- name: Configure service monitoring servers
+  hosts: service
+  become: true
+  
+  roles:
+    - pre-requisites
+    - service

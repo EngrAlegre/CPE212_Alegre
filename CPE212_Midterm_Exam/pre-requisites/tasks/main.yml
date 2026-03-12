@@ -1,0 +1,12 @@
+---
+- name: Install common prerequisite packages
+  apt:
+    name:
+      - apt-transport-https
+      - openjdk-11-jdk
+      - wget
+      - curl
+      - gnupg
+      - software-properties-common
+    state: present
+    update_cache: yes
