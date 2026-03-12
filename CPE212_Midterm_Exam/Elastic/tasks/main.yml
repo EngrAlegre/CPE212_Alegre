@@ -89,6 +89,43 @@
     - elastic_component == 'elasticsearch'
   notify: Restart Elasticsearch
 
+- name: Remove stale Elasticsearch auto-configuration SSL settings
+  lineinfile:
+    path: /etc/elasticsearch/elasticsearch.yml
+    regexp: '^{{ item }}:'
+    state: absent
+  loop:
+    - xpack.security.enrollment.enabled
+    - xpack.security.http.ssl.enabled
+    - xpack.security.http.ssl.keystore.path
+    - xpack.security.transport.ssl.enabled
+    - xpack.security.transport.ssl.verification_mode
+    - xpack.security.transport.ssl.keystore.path
+    - xpack.security.transport.ssl.truststore.path
+    - cluster.initial_master_nodes
+    - http.host
+  when:
+    - elastic_component == 'elasticsearch'
+  notify: Restart Elasticsearch
+
+- name: Remove nested Elasticsearch HTTP SSL auto-configuration block
+  replace:
+    path: /etc/elasticsearch/elasticsearch.yml
+    regexp: '(?ms)^xpack\.security\.http\.ssl:\n(?:^[ \t].*\n)+\n?'
+    replace: ''
+  when:
+    - elastic_component == 'elasticsearch'
+  notify: Restart Elasticsearch
+
+- name: Remove nested Elasticsearch transport SSL auto-configuration block
+  replace:
+    path: /etc/elasticsearch/elasticsearch.yml
+    regexp: '(?ms)^xpack\.security\.transport\.ssl:\n(?:^[ \t].*\n)+\n?'
+    replace: ''
+  when:
+    - elastic_component == 'elasticsearch'
+  notify: Restart Elasticsearch
+
 - name: Configure Elasticsearch network settings
   lineinfile:
     path: /etc/elasticsearch/elasticsearch.yml
