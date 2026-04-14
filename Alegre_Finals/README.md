@@ -9,7 +9,7 @@
 ## Inputs
 
 - Config file: `config.yaml`
-- Inventory file (structured): `inventory/hosts.yaml`
+- Inventory file: `inventory/inventory.ini`
 
 ## How to run
 
@@ -19,10 +19,10 @@ From this folder:
   - `ansible-galaxy collection install -r collections/requirements.yml`
 
 - Syntax check:
-  - `ansible-playbook -i inventory/hosts.yaml site.yml --syntax-check`
+  - `ansible-playbook -i inventory/inventory.ini site.yml --syntax-check`
 
 - Run:
-  - `ansible-playbook -i inventory/hosts.yaml site.yml`
+  - `ansible-playbook -i inventory/inventory.ini site.yml`
 
 ## Notes
 
