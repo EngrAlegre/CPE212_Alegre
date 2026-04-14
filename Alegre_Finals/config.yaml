@@ -1,19 +1,14 @@
-# Central config consumed by site.yml via vars_files.
-# Override any value at runtime with: ansible-playbook ... -e "postgres_db_name=..."
-
 motd_message: "Ansible Managed by Alegre"
 
 postgres:
   port: 5432
   listen_addresses: "*"
-  # CIDRs allowed to connect (adjust to your network)
   allowed_cidrs:
     - "10.0.0.0/8"
     - "192.168.0.0/16"
   db_name: "appdb"
   db_user: "appuser"
-  # For production, prefer ansible-vault. This is plain-text for school/lab use.
-  db_password: "ChangeMe123!"
+  db_password: "Alegre123"
 
 monitoring:
   prometheus:
