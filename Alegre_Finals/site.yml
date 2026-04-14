@@ -1,0 +1,29 @@
+---
+# Enterprise service: PostgreSQL (Debian + CentOS/RHEL)
+# Monitoring: Prometheus server (optional separate host) + Node Exporter on all monitored nodes
+# MOTD: "Ansible Managed by Alegre"
+
+- name: Base configuration (MOTD + Node Exporter)
+  hosts: all
+  become: true
+  vars_files:
+    - config.yaml
+  roles:
+    - role: common_motd
+    - role: node_exporter
+
+- name: Install and configure PostgreSQL
+  hosts: db_servers
+  become: true
+  vars_files:
+    - config.yaml
+  roles:
+    - role: postgresql
+
+- name: Install and configure Prometheus server
+  hosts: monitoring_server
+  become: true
+  vars_files:
+    - config.yaml
+  roles:
+    - role: prometheus

@@ -1,0 +1,95 @@
+---
+- name: Install PostgreSQL packages (Debian)
+  ansible.builtin.apt:
+    name:
+      - postgresql
+      - postgresql-contrib
+      - python3-psycopg2
+    update_cache: true
+    state: present
+  when: ansible_os_family == 'Debian'
+
+- name: Install PostgreSQL packages (RHEL/CentOS)
+  ansible.builtin.yum:
+    name:
+      - postgresql-server
+      - postgresql-contrib
+      - python3-psycopg2
+    state: present
+  when: ansible_os_family == 'RedHat'
+
+- name: Install psycopg2 for EL7 (fallback)
+  ansible.builtin.yum:
+    name:
+      - python-psycopg2
+    state: present
+  when:
+    - ansible_os_family == 'RedHat'
+    - (ansible_distribution_major_version | int) <= 7
+
+- name: Initialize PostgreSQL database (RHEL/CentOS)
+  ansible.builtin.command: postgresql-setup --initdb
+  args:
+    creates: /var/lib/pgsql/data/PG_VERSION
+  when: ansible_os_family == 'RedHat'
+
+- name: Ensure PostgreSQL is enabled and running
+  ansible.builtin.service:
+    name: "{{ 'postgresql' if ansible_os_family == 'Debian' else 'postgresql' }}"
+    enabled: true
+    state: started
+
+- name: Locate Debian postgresql.conf
+  ansible.builtin.find:
+    paths: /etc/postgresql
+    patterns: postgresql.conf
+    file_type: file
+  register: debian_pg_conf_find
+  when: ansible_os_family == 'Debian'
+
+- name: Set PostgreSQL config paths
+  ansible.builtin.set_fact:
+    postgresql_conf_path: >-
+      {{ (debian_pg_conf_find.files | sort(attribute='path') | last).path if ansible_os_family == 'Debian' else '/var/lib/pgsql/data/postgresql.conf' }}
+    postgresql_hba_path: >-
+      {{ ((debian_pg_conf_find.files | sort(attribute='path') | last).path | regex_replace('postgresql\\.conf$', 'pg_hba.conf')) if ansible_os_family == 'Debian' else '/var/lib/pgsql/data/pg_hba.conf' }}
+
+- name: Configure PostgreSQL listen_addresses
+  ansible.builtin.lineinfile:
+    path: "{{ postgresql_conf_path }}"
+    regexp: '^#?listen_addresses\\s*='
+    line: "listen_addresses = '{{ postgres.listen_addresses | default('*') }}'"
+  notify: Restart postgresql
+
+- name: Configure PostgreSQL port
+  ansible.builtin.lineinfile:
+    path: "{{ postgresql_conf_path }}"
+    regexp: '^#?port\\s*='
+    line: "port = {{ postgres.port | default(5432) }}"
+  notify: Restart postgresql
+
+- name: Allow client CIDRs in pg_hba.conf
+  ansible.builtin.lineinfile:
+    path: "{{ postgresql_hba_path }}"
+    insertafter: EOF
+    line: "host    all             all             {{ item }}            md5"
+    state: present
+  loop: "{{ postgres.allowed_cidrs | default([]) }}"
+  notify: Restart postgresql
+
+- name: Ensure PostgreSQL is restarted if config changed
+  ansible.builtin.meta: flush_handlers
+
+- name: Create database user
+  community.postgresql.postgresql_user:
+    name: "{{ postgres.db_user }}"
+    password: "{{ postgres.db_password }}"
+    state: present
+  become_user: postgres
+
+- name: Create database
+  community.postgresql.postgresql_db:
+    name: "{{ postgres.db_name }}"
+    owner: "{{ postgres.db_user }}"
+    state: present
+  become_user: postgres

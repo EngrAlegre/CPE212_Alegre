@@ -1,0 +1,28 @@
+all:
+  vars:
+    # Common SSH vars (edit to match your lab)
+    ansible_user: isaac
+    # ansible_ssh_private_key_file: "~/.ssh/id_rsa"
+
+  children:
+    db_servers:
+      hosts:
+        debian-db-1:
+          ansible_host: 192.168.56.11
+        centos-db-1:
+          ansible_host: 192.168.56.21
+
+    monitoring_server:
+      hosts:
+        prometheus-1:
+          ansible_host: 192.168.56.31
+
+    monitored_nodes:
+      # Nodes that will run Node Exporter and will be scraped by Prometheus.
+      # You can include db servers here, app servers, etc.
+      children:
+        db_servers: {}
+        monitoring_server: {}
+      hosts:
+        debian-app-1:
+          ansible_host: 192.168.56.12

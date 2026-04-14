@@ -1,0 +1,15 @@
+global:
+  scrape_interval: {{ monitoring.prometheus.scrape_interval | default('15s') }}
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:{{ monitoring.prometheus.port | default(9090) }}']
+
+  - job_name: 'node_exporter'
+    static_configs:
+      - targets:
+{% set port = monitoring.node_exporter.port | default(9100) %}
+{% for host in (groups['monitored_nodes'] | default([])) | sort %}
+          - '{{ (hostvars[host].ansible_host | default(host)) }}:{{ port }}'
+{% endfor %}
